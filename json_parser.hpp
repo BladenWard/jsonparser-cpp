@@ -2,6 +2,14 @@
 #define JSON_PARSER_HPP
 
 #include <string>
+#include <variant>
+#include <vector>
+#include <unordered_map>
+#include <iostream>
+#include <sstream>
+#include <cctype>
+#include <ostream>
+
 #include "json_values.hpp"
 
 JsonValue parse(const std::string& value);
@@ -15,5 +23,6 @@ JsonValue parse_array(const std::string& value, size_t& i);
 JsonValue parse_object(const std::string& value, size_t& i);
 void skip_whitespace(const std::string& value, size_t& i);
 void print_json(const JsonValue& value);
+std::ostream& operator<<(std::ostream& os, const JsonValue& json_value);
 
 #endif

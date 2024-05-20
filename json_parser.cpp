@@ -15,7 +15,6 @@ JsonValue parse(const std::string& json) {
 }
 
 JsonValue parse_value(const std::string& json, size_t& i) {
-    std::cout << "Parsing value: " << json[i] << std::endl;
     switch (json[i]) {
         case 'n':
             return parse_null(json, i);
@@ -49,6 +48,7 @@ JsonValue parse_value(const std::string& json, size_t& i) {
 JsonValue parse_null(const std::string& json, size_t& i) {
     if (json.substr(i, 4) == "null") {
         i += 4;
+        std::cout << "Parsed null" << std::endl;
         return JsonValue(nullptr);
     }
     throw std::invalid_argument("Invalid JSON null");
@@ -57,6 +57,7 @@ JsonValue parse_null(const std::string& json, size_t& i) {
 JsonValue parse_true(const std::string& json, size_t& i) {
     if (json.substr(i, 4) == "true") {
         i += 4;
+        std::cout << "Parsed true" << std::endl;
         return JsonValue(true);
     }
     throw std::invalid_argument("Invalid JSON true");
@@ -65,6 +66,7 @@ JsonValue parse_true(const std::string& json, size_t& i) {
 JsonValue parse_false(const std::string& json, size_t& i) {
     if (json.substr(i, 5) == "false") {
         i += 5;
+        std::cout << "Parsed false" << std::endl;
         return JsonValue(false);
     }
     throw std::invalid_argument("Invalid JSON false");
@@ -81,8 +83,10 @@ JsonValue parse_number(const std::string& json, size_t& i) {
     }
     std::string num_str = json.substr(start, i - start);
     if (is_double) {
+        std::cout << "Parsed double: " << num_str << std::endl;
         return JsonValue(stod(num_str));
     } else {
+        std::cout << "Parsed int: " << num_str << std::endl;
         return JsonValue(stoi(num_str));
     }
 }
@@ -101,7 +105,7 @@ JsonValue parse_string(const std::string& json, size_t& i) {
     }
     std::string str = json.substr(start, i - start);
     i++; // Skip closing quote
-    std::cout << "Parsed std::string: " << str << std::endl;
+    std::cout << "Parsed string: " << str << std::endl;
     return JsonValue(str);
 }
 
@@ -120,6 +124,7 @@ JsonValue parse_array(const std::string& json, size_t& i) {
         throw std::invalid_argument("Unterminated JSON array");
     }
     i++; // Skip closing bracket
+    std::cout << "Parsed array" << arr << std::endl;
     return JsonValue(std::move(arr));
 }
 
@@ -164,4 +169,45 @@ void skip_whitespace(const std::string& json, size_t& i) {
     while (i < json.length() && std::isspace(json[i])) {
         i++;
     }
+}
+
+std::ostream& operator<<(std::ostream& os, const JsonValue& json_value) {
+    std::ostringstream oss;
+    std::visit([&oss](const auto& value) {
+        using T = std::decay_t<decltype(value)>;
+        if constexpr (std::is_same_v<T, nullptr_t>) {
+            oss << "null";
+        } else if constexpr (std::is_same_v<T, bool>) {
+            oss << (value ? "true" : "false");
+        } else if constexpr (std::is_same_v<T, int>) {
+            oss << value;
+        } else if constexpr (std::is_same_v<T, double>) {
+            oss << value;
+        } else if constexpr (std::is_same_v<T, std::string>) {
+            oss << '"' << value << '"';
+        } else if constexpr (std::is_same_v<T, std::vector<JsonValue>>) {
+            oss << '[';
+            bool first = true;
+            for (const auto& item : value) {
+                if (!first) {
+                    oss << ", ";
+                }
+                first = false;
+                oss << item;
+            }
+            oss << ']';
+        } else if constexpr (std::is_same_v<T, std::unordered_map<std::string, JsonValue>>) {
+            oss << '{';
+            bool first = true;
+            for (const auto& [key, val] : value) {
+                if (!first) {
+                    oss << ", ";
+                }
+                first = false;
+                oss << '"' << key << "\": " << val;
+            }
+            oss << '}';
+        }
+    }, json_value.get_value());
+    return os << oss.str();
 }
