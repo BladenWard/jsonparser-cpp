@@ -2,16 +2,13 @@
 #define JSON_PARSER_HPP
 
 #include <string>
-#include <variant>
-#include <vector>
-#include <unordered_map>
 #include <iostream>
-#include <sstream>
 #include <cctype>
 #include <ostream>
 
 #include "json_values.hpp"
 
+std::string trim(const std::string& str);
 JsonValue parse(const std::string& value);
 JsonValue parse_value(const std::string& value, size_t& i);
 JsonValue parse_string(const std::string& value, size_t& i);

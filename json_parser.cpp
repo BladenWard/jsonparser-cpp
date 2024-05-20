@@ -2,6 +2,7 @@
 #include <iostream>
 #include <ostream>
 #include <stdexcept>
+#include <sstream>
 
 #include "json_parser.hpp"
 
@@ -75,12 +76,14 @@ JsonValue parse_false(const std::string& json, size_t& i) {
 JsonValue parse_number(const std::string& json, size_t& i) {
     size_t start = i;
     bool is_double = false;
+
     while (i < json.length() && (isdigit(json[i]) || json[i] == '.' || json[i] == 'e' || json[i] == 'E' || json[i] == '+' || json[i] == '-')) {
         if (json[i] == '.') {
             is_double = true;
         }
         i++;
     }
+
     std::string num_str = json.substr(start, i - start);
     if (is_double) {
         std::cout << "Parsed double: " << num_str << std::endl;
@@ -94,25 +97,50 @@ JsonValue parse_number(const std::string& json, size_t& i) {
 JsonValue parse_string(const std::string& json, size_t& i) {
     i++; // Skip opening quote
     size_t start = i;
+
     while (i < json.length() && json[i] != '"') {
         if (json[i] == '\\') {
             i++; // Skip escaped character
         }
         i++;
     }
+
     if (i == json.length()) {
         throw std::invalid_argument("Unterminated JSON std::string");
     }
+
     std::string str = json.substr(start, i - start);
     i++; // Skip closing quote
     std::cout << "Parsed string: " << str << std::endl;
     return JsonValue(str);
 }
 
+std::string parse_string_return_string(const std::string& json, size_t& i) {
+    i++; // Skip opening quote
+    size_t start = i;
+
+    while (i < json.length() && json[i] != '"') {
+        if (json[i] == '\\') {
+            i++; // Skip escaped character
+        }
+        i++;
+    }
+
+    if (i == json.length()) {
+        throw std::invalid_argument("Unterminated JSON std::string");
+    }
+
+    std::string str = json.substr(start, i - start);
+    i++; // Skip closing quote
+    std::cout << "Parsed string: " << str << std::endl;
+    return str;
+}
+
 JsonValue parse_array(const std::string& json, size_t& i) {
     i++; // Skip opening bracket
     skip_whitespace(json, i);
     std::vector<JsonValue> arr;
+
     while (i < json.length() && json[i] != ']') {
         arr.push_back(parse_value(json, i));
         if (i < json.length() && json[i] == ',') {
@@ -120,48 +148,46 @@ JsonValue parse_array(const std::string& json, size_t& i) {
         }
         skip_whitespace(json, i);
     }
+
     if (i == json.length()) {
         throw std::invalid_argument("Unterminated JSON array");
     }
+
     i++; // Skip closing bracket
-    std::cout << "Parsed array" << arr << std::endl;
+    std::cout << "Parsed array: " << arr << std::endl;
     return JsonValue(std::move(arr));
 }
 
 JsonValue parse_object(const std::string& json, size_t& i) {
     i++; // Skip opening brace
+    skip_whitespace(json, i);
     std::unordered_map<std::string, JsonValue> obj;
     while (i < json.length() && json[i] != '}') {
         if (json[i] != '"') {
             std::cerr << "Invalid JSON object key: " << json[i] << std::endl;
             throw std::invalid_argument("Invalid JSON object key");
         }
-        i++; // Skip opening quote
-        size_t start = i;
-        while (i < json.length() && json[i] != '"') {
-            if (json[i] == '\\') {
-                i++; // Skip escaped character
-            }
-            i++;
-        }
-        if (i == json.length()) {
-            throw std::invalid_argument("Unterminated JSON std::string");
-        }
-        std::string key = json.substr(start, i - start);
-        i++; // Skip closing quote
+
+        std::string key = parse_string_return_string(json, i);
+        skip_whitespace(json, i);
         if (i == json.length() || json[i] != ':') {
             throw std::invalid_argument("Missing colon in JSON object");
         }
+
         i++; // Skip colon
+        skip_whitespace(json, i);
+
         obj[key] = parse_value(json, i);
         if (i < json.length() && json[i] == ',') {
             i++;
         }
+        skip_whitespace(json, i);
     }
     if (i == json.length()) {
         throw std::invalid_argument("Unterminated JSON object");
     }
     i++; // Skip closing brace
+    std::cout << "Parsed object: " << obj << std::endl;
     return JsonValue(std::move(obj));
 }
 
