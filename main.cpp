@@ -1,38 +1,10 @@
-// Write a json parser that can parse the following json string:
-// {
-//    "name": "John",
-//    "age": 30,
-//    "cars": {
-//    "car1": "Ford",
-//    "car2": "BMW",
-//    "car3": "Fiat"
-//    }
-//    "friends": ["Jane", "Jack", "Philip"]
-//    "isMarried": true
-//    "spouse": null
-//    "children": []
-//    "address": {
-//    "street": "123 Main Street",
-//    "city": "New York",
-//    "state": "NY",
-//    "zip": "10001"
-//    }
-//    "phoneNumbers": [
-//    {
-//    "type": "home",
-//    "number": "212 555-1234"
-//    },
-//    {
-//    "type": "office",
-//    "number": "646 555-4567"
-//    }
-//    ]
-// }
-
 #include <iostream>
 #include <fstream>
+#include <string>
 
 #include <getopt.h>
+
+#include "json_parser.hpp"
 
 std::string read_file(const std::string& filename) {
     std::ifstream file(filename);
@@ -50,7 +22,6 @@ std::string read_file(const std::string& filename) {
 
     return json_file;
 }
-
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
@@ -73,7 +44,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    std::cout << "Parsing json object: " << json_file << std::endl;
+    parse(json_file);
 
     return 0;
 }
