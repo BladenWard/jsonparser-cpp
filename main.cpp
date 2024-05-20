@@ -34,38 +34,46 @@
 
 #include <getopt.h>
 
+std::string read_file(const std::string& filename) {
+    std::ifstream file(filename);
+    std::string json_file;
+    if (!file) {
+        std::cerr << "Error: could not open file: " << filename << std::endl;
+        exit(1);
+    }
+
+    while (file) {
+        std::string line;
+        std::getline(file, line);
+        json_file += line;
+    }
+
+    return json_file;
+}
+
+
 int main(int argc, char* argv[]) {
     if (argc < 2) {
         std::cerr << "Usage: " << argv[0] << " <json_object>" << std::endl;
         return 1;
     }
 
+    FILE* fp;  // this is for redirecting stdin
     int opt;
-    std::string json_file;
-    std::string json_object;
+    std::string json_file = argv[1];
+
     while ((opt = getopt(argc, argv, "f:h")) != -1) {
         switch (opt) {
             case 'f':
-                {
-                    // TODO: make fp for reading stdin
-                    std::ifstream file(optarg);
-                    std::cout << "Reading json file: " << optarg << std::endl;
-                    if (!file) {
-                        std::cerr << "Error: could not open file: " << optarg << std::endl;
-                        return 1;
-                    }
-                    while (file) {
-                        std::string line;
-                        std::getline(file, line);
-                        json_file += line;
-                    }
-                    break;
-                }
+                json_file = read_file(optarg);
+                break;
             default:
                 std::cout << "Usage: " << argv[0] << " -f <json_file>" << std::endl;
                 return 0;
         }
     }
+
+    std::cout << "Parsing json object: " << json_file << std::endl;
 
     return 0;
 }
